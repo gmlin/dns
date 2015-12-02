@@ -28,32 +28,43 @@ public class DNSServer {
 	}
 
 	public static void main(String[] args) throws IOException {
+
+
+
 		Thread serverThread = new Thread() {
 			public void run() {
-				ServerSocket serverSocket = null;
 				try {
-					serverSocket = new ServerSocket(0);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				System.out.println("Server has been started on port " + serverSocket.getLocalPort() + ".");
-				while(!Thread.currentThread().isInterrupted()) {
-					try {
-						Socket connectionSocket = serverSocket.accept();
-						new Thread(new ClientRequest(connectionSocket)).start();
-					} catch (IOException e) {
-						e.printStackTrace();
+					final ServerSocket serverSocket = new ServerSocket(0);
+
+					System.out.println("Server has been started on port " + serverSocket.getLocalPort() + ".");
+
+					Runtime.getRuntime().addShutdownHook(new Thread() {
+						public void run() {
+							try {
+								serverSocket.close();
+								System.out.println("Server has been stopped.");
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+					});
+					
+					while(!Thread.currentThread().isInterrupted()) {
+						try {
+							Socket connectionSocket = serverSocket.accept();
+							new Thread(new ClientRequest(connectionSocket)).start();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
 					}
-				}
-				try {
-					serverSocket.close();
-					System.out.println("Server has been stopped.");
+
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
 		};
 		serverThread.start();
+
 	}
 
 }
