@@ -17,12 +17,38 @@ public class DNSServer {
 		}
 
 		public void run() {
+			String clientCommand;
+			String serverResponse = "";
+			
+			System.out.println("A connection has been made.");
 			try {
 				BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
 				DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
+				while (!connectionSocket.isClosed()) {
+					clientCommand = inFromClient.readLine();
+					switch (clientCommand) {
+					case "help":
+						break;
+					case "put":
+						break;
+					case "get":
+						break;
+					case "del":
+						break;
+					case "browse":
+						break;
+					case "exit":
+						connectionSocket.close();
+						break;
+					default:
+						break;
+					}
+					outToClient.writeBytes(serverResponse + "\n");
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+			System.out.println("Connection has been closed.");
 		}
 
 	}
@@ -48,14 +74,10 @@ public class DNSServer {
 							}
 						}
 					});
-					
+
 					while(!Thread.currentThread().isInterrupted()) {
-						try {
-							Socket connectionSocket = serverSocket.accept();
-							new Thread(new ClientRequest(connectionSocket)).start();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
+						Socket connectionSocket = serverSocket.accept();
+						new Thread(new ClientRequest(connectionSocket)).start();
 					}
 
 				} catch (IOException e) {
