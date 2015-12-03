@@ -10,6 +10,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.TreeMap;
 
 public class DNSServer {
@@ -24,6 +25,7 @@ public class DNSServer {
 
 		public void run() {
 			String clientCommand;
+			String[] commandArgs = new String[4];
 			String serverResponse = "";
 
 			System.out.println("A connection has been made.");
@@ -32,14 +34,19 @@ public class DNSServer {
 				DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
 				while (!connectionSocket.isClosed()) {
 					clientCommand = inFromClient.readLine();
-					switch (clientCommand) {
+					commandArgs = clientCommand.split(" ");
+					switch (commandArgs[0]) {
 					case "put":
+						serverResponse = put(commandArgs[1], commandArgs[2], commandArgs[3]);
 						break;
 					case "get":
+						serverResponse = get(commandArgs[1], commandArgs[2]);
 						break;
 					case "del":
+						serverResponse = del(commandArgs[1], commandArgs[2]);
 						break;
 					case "browse":
+						serverResponse = browse();
 						break;
 					case "exit":
 						connectionSocket.close();
@@ -101,7 +108,7 @@ public class DNSServer {
 							Socket connectionSocket = serverSocket.accept();
 							new Thread(new ClientRequest(connectionSocket)).start();
 						}
-						catch (IOException e) {
+						catch (SocketException e) {
 						}
 					}
 				} catch (IOException e) {
@@ -110,4 +117,59 @@ public class DNSServer {
 					e.printStackTrace();
 				}
 			}
+
+	public static String put(String name, String value, String type) {
+		synchronized(database) {
+			if (!database.containsKey(type)) {
+				database.put(type, new TreeMap<String, String>());
+			}
+			if (database.get(type).containsKey(name)) {
+				database.get(type).put(name, value);
+				return "The record has been updated.";
+			}
+			else {
+				database.get(type).put(name, value);
+				return "The record has been added.";
+			}
+		}
+	}
+	
+	public static String get(String name, String type) {
+		synchronized(database) {
+			if (!database.containsKey(type) || !database.get(type).containsKey(name)) {
+				return "The record of type " + type + 
+						" and name " + name + " cannot be found.";
+			}
+			else {
+				return database.get(type).get(name);
+			}
+		}
+	}
+	
+	public static String del(String name, String type) {
+		synchronized(database) {
+			if (!database.containsKey(type) || !database.get(type).containsKey(name)) {
+				return "The record of type " + type + 
+						" and name " + name + " cannot be found.";
+			}
+			else {
+				database.get(type).remove(name);
+				return "The record has been removed.";
+			}
+		}
+	}
+	
+	public static String browse() {
+		synchronized(database) {
+			String records = "";
+			for (String type : database.keySet()) {
+				for (String name : database.get(type).keySet()) {
+					records += "Name: " + name + "\n"
+							+ "Type: " + type + "\n";
+				}
+			}
+			return records;
+		}
+	}
+	
 }
