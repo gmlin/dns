@@ -27,11 +27,29 @@ public class DNSClient {
 				inFromUser.close();
 				clientSocket.close();
 			}
+			else if (clientCommand.equals("help")) {
+				printHelp();
+			}
 			else {
 				serverResponse = inFromServer.readLine();
 				System.out.println(serverResponse);
 			}	
 			
 		}
+	}
+
+	private static void printHelp() {
+		String helpMessage;
+		helpMessage = "help: prints a list of supported commands\n"
+		+ "put [name] [value] [type]: adds name record to the database "
+		+ "or updates the record with the new value\n"
+		+ "get [name] [type]: returns the value of the record with the "
+		+ "provided name and type\n"
+		+ "del [name] [type]: removes the record with the provided "
+		+ "name and type from the database\n"
+		+ "browse: displays the name and type of all current name records "
+		+ "in the database\n"
+		+ "exit: terminates connection with the server and exits the program\n";
+		System.out.println(helpMessage);
 	}
 }
