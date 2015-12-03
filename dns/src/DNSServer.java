@@ -61,11 +61,9 @@ public class DNSServer {
 
 	private static TreeMap<String, TreeMap<String, String>> database;
 
+	@SuppressWarnings("unchecked")
 	public static void main(String[] args) throws IOException {
 
-		Thread serverThread = new Thread() {
-			@SuppressWarnings("unchecked")
-			public void run() {
 				try {
 					File f = new File("database");
 					if (f.exists()) {
@@ -98,7 +96,7 @@ public class DNSServer {
 						}
 					});
 					
-					while(!Thread.currentThread().isInterrupted()) {
+					while(true) {
 						try {
 							Socket connectionSocket = serverSocket.accept();
 							new Thread(new ClientRequest(connectionSocket)).start();
@@ -112,9 +110,4 @@ public class DNSServer {
 					e.printStackTrace();
 				}
 			}
-		};
-		serverThread.start();
-
-	}
-
 }
