@@ -82,7 +82,7 @@ public class DNSServer {
 		}
 
 	}
-	//end of helper class code
+	//end of ClientRequest code
 
 	//database using a TreeMap within a TreeMap in the form of (type, (name, value)), all string values
 	private static TreeMap<String, TreeMap<String, String>> database;
@@ -141,7 +141,7 @@ public class DNSServer {
 		}
 	}
 
-	//synchronized(database) in all methods to prevent concurrent access conflicts
+	//synchronized(database) in all following command methods to prevent concurrent access conflicts
 	
 	public static String put(String name, String value, String type) {
 		synchronized(database) {
