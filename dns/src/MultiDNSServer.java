@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -105,7 +106,8 @@ public class MultiDNSServer {
 			database = new TreeMap<String, String>();
 		}
 		final ServerSocket serverSocket = new ServerSocket(0);
-		System.out.println(serverSocket.getInetAddress().getHostAddress() + ":" + serverSocket.getLocalPort());
+		serverSocket.getInetAddress();
+		System.out.println(InetAddress.getLocalHost().getHostName() + ":" + serverSocket.getLocalPort());
 
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
@@ -175,7 +177,7 @@ public class MultiDNSServer {
 		synchronized(database) {
 			String records = "";
 			for (String name : database.keySet()) {
-				records += "\nName: " + name + "\n";
+				records += "Name: " + name + "\n";
 			}
 			if (records.equals("")) {
 				return "200 OK\nThe database is empty.";

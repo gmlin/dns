@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -54,8 +55,11 @@ public class MultiDNSManager {
 					commandArgs = clientCommand.split(" ");
 					try {
 						switch (commandArgs[0]) {
-						case "server":
-							serverResponse = "200 OK\n" + map.get(commandArgs[1]);
+						case "connect":
+							serverResponse = server(commandArgs[1]);
+							break;
+						case "type":
+							serverResponse = server(commandArgs[1]);
 							break;
 						case "exit":
 							outToClient.close();
@@ -97,8 +101,9 @@ public class MultiDNSManager {
 		else {
 
 			final ServerSocket serverSocket = new ServerSocket(MANAGER_PORT);
+			serverSocket.getInetAddress();
 			System.out.println("Manager has been started on " + 
-					serverSocket.getInetAddress().getHostAddress() + ":" + serverSocket.getLocalPort() + ".");
+					InetAddress.getLocalHost().getHostName() + ":" + serverSocket.getLocalPort() + ".");
 
 			FileReader fr = new FileReader(f);
 			BufferedReader br = new BufferedReader(fr);
@@ -149,4 +154,15 @@ public class MultiDNSManager {
 			}
 		}
 	}
+
+	public static String server(String type) {
+		if (map.containsKey(type)) {
+			return "200 OK\n" + map.get(type);
+		}
+		else {
+			return "404 Not Found\nType not found.";
+		}
+	}
+	
+	
 }

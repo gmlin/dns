@@ -19,6 +19,10 @@ public class MultiDNSClient {
 			+ "name from the database\n"
 			+ "\nbrowse: displays the name of all current name records "
 			+ "in the database\n"
+			+ "\ntype [type]: returns the address and port of the server "
+			+ "handling the specified record type\n"
+			+ "\n done: terminates current connection with the type server "
+			+ "and prompts for another type\n"
 			+ "\nexit: terminates connection with the manager and server and exits the program\n";
 
 	private static final int SO_TIMEOUT = 10000;
@@ -29,7 +33,7 @@ public class MultiDNSClient {
 		String[] address;
 		String clientCommand;
 		Socket serverSocket = null;
-		byte[] serverResponse;
+		byte[] response;
 		int responseLength;
 		String[] lines;
 		
@@ -45,18 +49,23 @@ public class MultiDNSClient {
 				if (serverSocket == null) {
 					System.out.println("Enter the record type that you are interested in:");
 					type = inFromUser.readLine();
-					outToManager.writeBytes("server " + type + "\n");
+					outToManager.writeBytes("connect " + type + "\n");
 					responseLength = inFromManager.readInt();
-					serverResponse = new byte[responseLength];
-					inFromManager.readFully(serverResponse);
-					lines = new String(serverResponse).split("\n");
+					response = new byte[responseLength];
+					inFromManager.readFully(response);
+					lines = new String(response).split("\n");
 					System.out.println(lines[0]);
-					address = lines[1].split(":");
-					serverSocket = new Socket(address[0], Integer.parseInt(address[1]));
-					serverSocket.setSoTimeout(SO_TIMEOUT);
-					outToServer = new DataOutputStream(serverSocket.getOutputStream());
-					inFromServer = new DataInputStream(serverSocket.getInputStream());
-					System.out.println("Connected to server for record type " + type + ".");
+					if (lines[0].equals("200 OK")) {
+						address = lines[1].split(":");
+						serverSocket = new Socket(address[0], Integer.parseInt(address[1]));
+						serverSocket.setSoTimeout(SO_TIMEOUT);
+						outToServer = new DataOutputStream(serverSocket.getOutputStream());
+						inFromServer = new DataInputStream(serverSocket.getInputStream());
+						System.out.println("Connected to server for record type " + type + ".");
+					}
+					else {
+						System.out.println(lines[1]);
+					}
 				}
 				else {
 					System.out.println("Enter a command:");
@@ -78,41 +87,31 @@ public class MultiDNSClient {
 					else if (clientCommand.equals("help")) {
 						System.out.println(helpMessage);
 					}
+					else if (clientCommand.split(" ")[0].equals("type")) {
+						outToManager.writeBytes(clientCommand + "\n");
+						responseLength = inFromManager.readInt();
+						response = new byte[responseLength];
+						inFromManager.readFully(response);
+						System.out.println(new String(response));
+					}
+					else if (clientCommand.equals("done")) {
+						outToServer.writeBytes("exit\n");
+						inFromServer.close();
+						outToServer.close();
+						serverSocket.close();
+						serverSocket = null;
+					}
 					else {
 						outToServer.writeBytes(clientCommand + "\n");
 						//return server response
 						responseLength = inFromServer.readInt();
-						serverResponse = new byte[responseLength];
-						inFromServer.readFully(serverResponse);
-						System.out.println(new String(serverResponse));
+						response = new byte[responseLength];
+						inFromServer.readFully(response);
+						System.out.println(new String(response));
 					}
 				}
 			}
-				
-			/*
-			while (!clientSocket.isClosed()) {
-
-				clientCommand = inFromUser.readLine();
-
-				if (clientCommand.equals("exit")) {
-					outToServer.writeBytes(clientCommand + "\n");
-					inFromServer.close();
-					outToServer.close();
-					inFromUser.close();
-					clientSocket.close();;
-				}
-				else if (clientCommand.equals("help")) {
-					System.out.println(helpMessage);
-				}
-				else {
-					outToServer.writeBytes(clientCommand + "\n");
-					responseLength = inFromServer.readInt();
-					serverResponse = new byte[responseLength];
-					inFromServer.readFully(serverResponse);
-					System.out.println(new String(serverResponse));
-				}
-			}	
-			*/
+		
 		}
 		catch (UnknownHostException e) {
 			System.out.println("Cannot connect to manager with the provided hostname and port.");
