@@ -26,6 +26,7 @@ public class DNSClient {
 		String clientCommand;
 		byte[] serverResponse;
 		int responseLength;
+		
 		try {
 			BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
 			Socket clientSocket = new Socket(args[0], Integer.parseInt(args[1]));
@@ -40,6 +41,8 @@ public class DNSClient {
 				clientCommand = inFromUser.readLine();
 
 				outToServer.writeBytes(clientCommand + "\n");
+				
+				//if user enters exit command, close all data streams and socket
 				if (clientCommand.equals("exit")) {
 					inFromServer.close();
 					outToServer.close();
@@ -50,6 +53,7 @@ public class DNSClient {
 					System.out.println(helpMessage);
 				}
 				else {
+					//return server response
 					responseLength = inFromServer.readInt();
 					serverResponse = new byte[responseLength];
 					inFromServer.readFully(serverResponse);
