@@ -47,6 +47,7 @@ public class DNSClient {
 				}
 				else {
 					outToServer.writeBytes(clientCommand + "\n");
+					//return server response
 					responseLength = inFromServer.readInt();
 					serverResponse = new byte[responseLength];
 					inFromServer.readFully(serverResponse);

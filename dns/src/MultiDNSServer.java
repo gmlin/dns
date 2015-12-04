@@ -15,11 +15,11 @@ import java.util.TreeMap;
 
 public class MultiDNSServer {
 
-	public static class ClientRequest implements Runnable {
+	public static class ClientConnection implements Runnable {
 
 		private Socket connectionSocket;
 
-		public ClientRequest(Socket connectionSocket) {
+		public ClientConnection(Socket connectionSocket) {
 			this.connectionSocket = connectionSocket;
 		}
 
@@ -114,7 +114,7 @@ public class MultiDNSServer {
 		while(true) {
 			try {
 				Socket connectionSocket = serverSocket.accept();
-				new Thread(new ClientRequest(connectionSocket)).start();
+				new Thread(new ClientConnection(connectionSocket)).start();
 			}
 			catch (SocketException e) {
 			}
