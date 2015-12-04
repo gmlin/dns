@@ -29,9 +29,12 @@ public class DNSClient {
 		try {
 			BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
 			Socket clientSocket = new Socket(args[0], Integer.parseInt(args[1]));
+			//set timeout to 10 seconds
 			clientSocket.setSoTimeout(10000);
 			DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
 			DataInputStream inFromServer = new DataInputStream(clientSocket.getInputStream());
+			
+			//loop until user enters exit command
 			while (!clientSocket.isClosed()) {
 
 				clientCommand = inFromUser.readLine();

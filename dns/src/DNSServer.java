@@ -15,6 +15,7 @@ import java.util.TreeMap;
 
 public class DNSServer {
 
+	//helper class ClientRequest
 	public static class ClientRequest implements Runnable {
 
 		private Socket connectionSocket;
@@ -34,8 +35,10 @@ public class DNSServer {
 				DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
 				while (!connectionSocket.isClosed()) {
 					clientCommand = inFromClient.readLine();
+					//split user client commands into an array
 					commandArgs = clientCommand.split(" ");
 					try {
+						//set server response depending on user client command (unless exit is called)
 						switch (commandArgs[0]) {
 						case "put":
 							serverResponse = put(commandArgs[1], commandArgs[2], commandArgs[3]);
@@ -59,9 +62,11 @@ public class DNSServer {
 							break;
 						}
 					}
+					//error if user enters wrong parameters
 					catch (ArrayIndexOutOfBoundsException e) {
 						serverResponse = "400 Bad Request\nMissing arguments.";
 					}
+					//write response to client, if they didn't choose exit command
 					if (!clientCommand.equals("exit")) {
 						outToClient.writeInt(serverResponse.length());
 						outToClient.writeBytes(serverResponse);
@@ -83,6 +88,7 @@ public class DNSServer {
 
 		try {
 			File f = new File("database");
+			//get database TreeMap from database file if file exists
 			if (f.exists()) {
 				FileInputStream fis = new FileInputStream(f);
 				ObjectInputStream ois = new ObjectInputStream(fis);
@@ -90,6 +96,7 @@ public class DNSServer {
 				ois.close();
 				fis.close();
 			}
+			//otherwise initialize empty database TreeMap
 			else {
 				database = new TreeMap<String, TreeMap<String, String>>();
 			}
@@ -97,6 +104,7 @@ public class DNSServer {
 
 			System.out.println("Server has been started on port " + serverSocket.getLocalPort() + ".");
 
+			//save database TreeMap onto database file when server closes
 			Runtime.getRuntime().addShutdownHook(new Thread() {
 				public void run() {
 					try {
@@ -113,6 +121,7 @@ public class DNSServer {
 				}
 			});
 
+			//while server is running, create a new thread for each client request, request processed in helper class
 			while(true) {
 				try {
 					Socket connectionSocket = serverSocket.accept();
@@ -128,6 +137,8 @@ public class DNSServer {
 		}
 	}
 
+	//synchronized(database) in all methods to prevent concurrent access conflicts
+	
 	public static String put(String name, String value, String type) {
 		synchronized(database) {
 			if (!database.containsKey(type)) {
