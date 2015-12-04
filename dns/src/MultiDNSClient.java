@@ -36,7 +36,6 @@ public class MultiDNSClient {
 
 				clientCommand = inFromUser.readLine();
 
-				outToServer.writeBytes(clientCommand + "\n");
 				if (clientCommand.equals("exit")) {
 					inFromServer.close();
 					outToServer.close();
@@ -47,6 +46,7 @@ public class MultiDNSClient {
 					System.out.println(helpMessage);
 				}
 				else {
+					outToServer.writeBytes(clientCommand + "\n");
 					responseLength = inFromServer.readInt();
 					serverResponse = new byte[responseLength];
 					inFromServer.readFully(serverResponse);

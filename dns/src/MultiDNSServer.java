@@ -79,9 +79,9 @@ public class MultiDNSServer {
 	private static TreeMap<String, TreeMap<String, String>> database;
 
 	@SuppressWarnings("unchecked")
-	public static void main(String[] args) throws IOException, ClassNotFoundException {
+	public static void main(final String[] args) throws IOException, ClassNotFoundException {
 
-		File f = new File("database");
+		File f = new File(args[0]);
 		if (f.exists()) {
 			FileInputStream fis = new FileInputStream(f);
 			ObjectInputStream ois = new ObjectInputStream(fis);
@@ -93,15 +93,14 @@ public class MultiDNSServer {
 			database = new TreeMap<String, TreeMap<String, String>>();
 		}
 		final ServerSocket serverSocket = new ServerSocket(0);
-
-		System.out.println("Server has been started on port " + serverSocket.getLocalPort() + ".");
+		System.out.println(serverSocket.getInetAddress().getHostAddress() + ":" + serverSocket.getLocalPort());
 
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
 				try {
 					serverSocket.close();
 					System.out.println("Server has been stopped.");
-					FileOutputStream fos = new FileOutputStream("database");
+					FileOutputStream fos = new FileOutputStream(args[0]);
 					ObjectOutputStream oos = new ObjectOutputStream(fos);
 					oos.writeObject(database);
 					oos.close();

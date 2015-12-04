@@ -6,12 +6,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 
 public class MultiDNSManager {
 
 	private static List<Process> processes = new ArrayList<Process>();
+	private static HashMap<String, String> map = new HashMap<String, String>();
 	
 	public static void main(String[] args) throws IOException {
 
@@ -24,17 +26,21 @@ public class MultiDNSManager {
 			FileReader fr = new FileReader(f);
 			BufferedReader br = new BufferedReader(fr);
 
-			String line;
+			String type;
 			Process process;
 			BufferedReader reader;
+			String address;
 			
-			while ((line = br.readLine().trim()) != null) {
-				if (!line.equals("")) {
-					process = Runtime.getRuntime().exec("java MultiDNSServer " + line);
+			while ((type = br.readLine()) != null) {
+				type = type.trim();
+				if (!type.equals("")) {
+					process = Runtime.getRuntime().exec("java MultiDNSServer " + type);
 					processes.add(process);
 					reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-					System.out.println(reader.readLine());
-					System.out.println(reader.readLine());
+					address = reader.readLine();
+					map.put(type, address);
+					System.out.println("Server for record type " + type + " has been started on " 
+					+ address + ".");
 					reader.close();
 				}
 			}
@@ -50,6 +56,7 @@ public class MultiDNSManager {
 					System.out.println("Manager has been stopped.");
 				}
 			});
+			while (true);
 		}
 	}
 }
