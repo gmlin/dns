@@ -12,15 +12,26 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+/*
+ * Manages servers that contain name records of a single type and helps
+ * clients connect to the server of a specified type
+ */
+
 public class MultiDNSManager {
 
+	//list of the server processes started by the manager
 	private static List<Process> processes = new ArrayList<Process>();
+	
+	//maps record type to server address information
 	private static HashMap<String, String> map = new HashMap<String, String>();
-	
+
+	//well-defined TCP port this program runs on
 	private static final int MANAGER_PORT = 14260;
-	
+
+	//helper class that handles a single client's requests
 	private static class ClientConnection implements Runnable {
 
+		//socket that connects client to the manager
 		private Socket connectionSocket;
 
 		public ClientConnection(Socket connectionSocket) {
@@ -36,7 +47,8 @@ public class MultiDNSManager {
 			try {
 				final BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
 				final DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
-				
+
+				//run when thread ends
 				Runtime.getRuntime().addShutdownHook(new Thread() {
 					public void run() {
 						try {
@@ -48,12 +60,13 @@ public class MultiDNSManager {
 						}
 					}
 				});
-				
+
 				while (!connectionSocket.isClosed()) {
 					clientCommand = inFromClient.readLine();
-					//split user client commands into an array
+					//separates arguments by whitespace
 					commandArgs = clientCommand.split(" ");
 					try {
+						//performs actions based on client's first argument
 						switch (commandArgs[0]) {
 						case "connect":
 							serverResponse = server(commandArgs[1]);
@@ -66,19 +79,19 @@ public class MultiDNSManager {
 							inFromClient.close();
 							connectionSocket.close();
 							break;
-						//if first argument from user isn't recognized
+						//if first argument isn't recognized
 						default:
 							serverResponse = "400 Bad Request\nIncorrect command.";
 							break;
 						}
 					}
-					//error if user enters wrong parameters
 					catch (ArrayIndexOutOfBoundsException e) {
 						serverResponse = "400 Bad Request\nMissing arguments.";
 					}
-					//write response to client, if they didn't choose exit command
 					if (!clientCommand.equals("exit")) {
+						//send length of response
 						outToClient.writeInt(serverResponse.length());
+						//send response
 						outToClient.writeBytes(serverResponse);
 					}
 
@@ -90,7 +103,7 @@ public class MultiDNSManager {
 		}
 
 	}
-	
+
 
 	public static void main(String[] args) throws IOException {
 
@@ -101,7 +114,6 @@ public class MultiDNSManager {
 		else {
 
 			final ServerSocket serverSocket = new ServerSocket(MANAGER_PORT);
-			serverSocket.getInetAddress();
 			System.out.println("Manager has been started on " + 
 					InetAddress.getLocalHost().getHostName() + ":" + serverSocket.getLocalPort() + ".");
 
@@ -113,6 +125,7 @@ public class MultiDNSManager {
 			BufferedReader reader;
 			String address;
 
+			//starts new server process for each line in manager.in
 			while ((type = br.readLine()) != null) {
 				type = type.trim();
 				if (!type.equals("")) {
@@ -129,10 +142,12 @@ public class MultiDNSManager {
 			br.close();
 			fr.close();
 
+			//run when program ends
 			Runtime.getRuntime().addShutdownHook(new Thread() {
 				public void run() {
 
 					try {
+						//end each server process
 						for (Process process : processes) {
 							process.destroy();
 							System.out.println("Server has been stopped.");
@@ -144,6 +159,8 @@ public class MultiDNSManager {
 					System.out.println("Manager has been stopped.");
 				}
 			});
+			
+			//creates a new socket and thread for each client
 			while (true) {
 				try {
 					Socket connectionSocket = serverSocket.accept();
@@ -155,6 +172,7 @@ public class MultiDNSManager {
 		}
 	}
 
+	//get the server address information for the specified type
 	public static String server(String type) {
 		if (map.containsKey(type)) {
 			return "200 OK\n" + map.get(type);
@@ -163,6 +181,6 @@ public class MultiDNSManager {
 			return "404 Not Found\nType not found.";
 		}
 	}
-	
-	
+
+
 }

@@ -6,7 +6,9 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-
+/*
+ * Client for multiple name servers
+ */
 
 public class MultiDNSClient {
 
@@ -26,7 +28,7 @@ public class MultiDNSClient {
 			+ "\nexit: terminates connection with the manager and server and exits the program\n";
 
 	private static final int SO_TIMEOUT = 10000;
-	
+
 	public static void main(String[] args) throws IOException {
 
 		String type;
@@ -36,7 +38,7 @@ public class MultiDNSClient {
 		byte[] response;
 		int responseLength;
 		String[] lines;
-		
+
 		try {
 			BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
 			Socket managerSocket = new Socket(args[0], Integer.parseInt(args[1]));
@@ -69,9 +71,9 @@ public class MultiDNSClient {
 				}
 				else {
 					System.out.println("Enter a command:");
-					
+
 					clientCommand = inFromUser.readLine();
-	
+
 					if (clientCommand.equals("exit")) {
 						outToServer.writeBytes(clientCommand + "\n");
 						inFromServer.close();
@@ -82,11 +84,13 @@ public class MultiDNSClient {
 						inFromUser.close();
 						serverSocket.close();
 						managerSocket.close();
-						
+
 					}
 					else if (clientCommand.equals("help")) {
 						System.out.println(helpMessage);
 					}
+					
+					//send to manager
 					else if (clientCommand.split(" ")[0].equals("type")) {
 						outToManager.writeBytes(clientCommand + "\n");
 						responseLength = inFromManager.readInt();
@@ -94,6 +98,7 @@ public class MultiDNSClient {
 						inFromManager.readFully(response);
 						System.out.println(new String(response));
 					}
+					
 					else if (clientCommand.equals("done")) {
 						outToServer.writeBytes("exit\n");
 						inFromServer.close();
@@ -101,6 +106,8 @@ public class MultiDNSClient {
 						serverSocket.close();
 						serverSocket = null;
 					}
+					
+					//send to server
 					else {
 						outToServer.writeBytes(clientCommand + "\n");
 						//return server response
@@ -111,7 +118,7 @@ public class MultiDNSClient {
 					}
 				}
 			}
-		
+
 		}
 		catch (UnknownHostException e) {
 			System.out.println("Cannot connect to manager with the provided hostname and port.");

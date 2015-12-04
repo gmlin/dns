@@ -14,12 +14,20 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.TreeMap;
 
+/*
+ * Server that manages a database containing name records of a single type
+ */
+
+
 public class MultiDNSServer {
-	
+
+	//contains name records of a single type, maps names to values
 	private static TreeMap<String, String> database;
 
+	//helper class that handles a single client's requests
 	private static class ClientConnection implements Runnable {
 
+		//socket that connects client to the server
 		private Socket connectionSocket;
 
 		public ClientConnection(Socket connectionSocket) {
@@ -35,7 +43,8 @@ public class MultiDNSServer {
 			try {
 				final BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
 				final DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
-				
+
+				//run when thread ends
 				Runtime.getRuntime().addShutdownHook(new Thread() {
 					public void run() {
 						try {
@@ -47,11 +56,13 @@ public class MultiDNSServer {
 						}
 					}
 				});
-				
+
 				while (!connectionSocket.isClosed()) {
 					clientCommand = inFromClient.readLine();
+					//separates arguments by whitespace
 					commandArgs = clientCommand.split(" ");
 					try {
+						//performs actions based on client's first argument
 						switch (commandArgs[0]) {
 						case "put":
 							serverResponse = put(commandArgs[1], commandArgs[2]);
@@ -70,6 +81,7 @@ public class MultiDNSServer {
 							inFromClient.close();
 							connectionSocket.close();
 							break;
+						//if first argument isn't recognized
 						default:
 							serverResponse = "400 Bad Request\nIncorrect command.";
 							break;
@@ -79,7 +91,9 @@ public class MultiDNSServer {
 						serverResponse = "400 Bad Request\nMissing arguments.";
 					}
 					if (!clientCommand.equals("exit")) {
+						//send length of response
 						outToClient.writeInt(serverResponse.length());
+						//send response
 						outToClient.writeBytes(serverResponse);
 					}
 
@@ -94,7 +108,10 @@ public class MultiDNSServer {
 	@SuppressWarnings("unchecked")
 	public static void main(final String[] args) throws IOException, ClassNotFoundException {
 
+		//record type is name of file
 		File f = new File(args[0]);
+		
+		//deserialize database from file if the file exists
 		if (f.exists()) {
 			FileInputStream fis = new FileInputStream(f);
 			ObjectInputStream ois = new ObjectInputStream(fis);
@@ -107,8 +124,11 @@ public class MultiDNSServer {
 		}
 		final ServerSocket serverSocket = new ServerSocket(0);
 		serverSocket.getInetAddress();
+		
+		//prints hostname and port to stdout for manager to read
 		System.out.println(InetAddress.getLocalHost().getHostName() + ":" + serverSocket.getLocalPort());
 
+		//run when program ends
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
 				try {
@@ -116,6 +136,7 @@ public class MultiDNSServer {
 					System.out.println("Server has been stopped.");
 					FileOutputStream fos = new FileOutputStream(args[0]);
 					ObjectOutputStream oos = new ObjectOutputStream(fos);
+					//serializes database to file
 					oos.writeObject(database);
 					oos.close();
 					fos.close();
@@ -125,6 +146,7 @@ public class MultiDNSServer {
 			}
 		});
 
+		//creates a new socket and thread for each client
 		while(true) {
 			try {
 				Socket connectionSocket = serverSocket.accept();
@@ -134,8 +156,10 @@ public class MultiDNSServer {
 			}
 		}
 	}
-
+	
+	//creates or update record of specified name and value
 	public static String put(String name, String value) {
+		//locks database for duration of operation for concurrency
 		synchronized(database) {
 			if (database.containsKey(name)) {
 				database.put(name, value);
@@ -148,7 +172,10 @@ public class MultiDNSServer {
 		}
 	}
 
+	
+	//get record of the specified name
 	public static String get(String name) {
+		//locks database for duration of operation for concurrency
 		synchronized(database) {
 			if (!database.containsKey(name)) {
 				return "404 Not Found\n"
@@ -160,7 +187,9 @@ public class MultiDNSServer {
 		}
 	}
 
+	//delete record of the specified name
 	public static String del(String name) {
+		//locks database for duration of operation for concurrency
 		synchronized(database) {
 			if (!database.containsKey(name)) {
 				return "404 Not Found\n"
@@ -173,7 +202,9 @@ public class MultiDNSServer {
 		}
 	}
 
+	//gets the name of all records
 	public static String browse() {
+		//locks database for duration of operation for concurrency
 		synchronized(database) {
 			String records = "";
 			for (String name : database.keySet()) {

@@ -14,15 +14,19 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.TreeMap;
 
+/*
+ * Server that manages a database containing name records of all types
+ */
+
 public class DNSServer {
 
-	//database using a TreeMap within a TreeMap in the form of (type, (name, value)), all string values
-		private static TreeMap<String, TreeMap<String, String>> database;
+	//contains name records of all types, maps types to maps that map names to values
+	private static TreeMap<String, TreeMap<String, String>> database;
 
-	
-	//helper class ClientConnection
+	//helper class that handles a single client's requests
 	private static class ClientConnection implements Runnable {
 
+		//socket that connects client to the server
 		private Socket connectionSocket;
 
 		public ClientConnection(Socket connectionSocket) {
@@ -30,7 +34,7 @@ public class DNSServer {
 		}
 
 		public void run() {
-			
+
 			String clientCommand;
 			String[] commandArgs;
 			String serverResponse = "";
@@ -39,7 +43,8 @@ public class DNSServer {
 			try {
 				final BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
 				final DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
-				
+
+				//run when thread ends
 				Runtime.getRuntime().addShutdownHook(new Thread() {
 					public void run() {
 						try {
@@ -51,14 +56,13 @@ public class DNSServer {
 						}
 					}
 				});
-				
-				//loop until user client enters exit command
+
 				while (!connectionSocket.isClosed()) {
 					clientCommand = inFromClient.readLine();
-					//split user client commands into an array
+					//separates arguments by whitespace
 					commandArgs = clientCommand.split(" ");
 					try {
-						//set server response depending on user client command (unless exit is called)
+						//performs actions based on client's first argument
 						switch (commandArgs[0]) {
 						case "put":
 							serverResponse = put(commandArgs[1], commandArgs[2], commandArgs[3]);
@@ -77,19 +81,20 @@ public class DNSServer {
 							inFromClient.close();
 							connectionSocket.close();
 							break;
-						//if first argument from user isn't recognized
+						//if first argument isn't recognized
 						default:
 							serverResponse = "400 Bad Request\nIncorrect command.";
 							break;
 						}
 					}
-					//error if user enters wrong parameters
 					catch (ArrayIndexOutOfBoundsException e) {
 						serverResponse = "400 Bad Request\nMissing arguments.";
 					}
-					//write response to client, if they didn't choose exit command
+					
 					if (!clientCommand.equals("exit")) {
+						//send length of response
 						outToClient.writeInt(serverResponse.length());
+						//send response
 						outToClient.writeBytes(serverResponse);
 					}
 
@@ -100,14 +105,13 @@ public class DNSServer {
 		}
 
 	}
-	//end of ClientRequest code
 
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) throws IOException {
 
 		try {
 			File f = new File("database");
-			//get database TreeMap from database file if file exists
+			//deserialize database file if it exists
 			if (f.exists()) {
 				FileInputStream fis = new FileInputStream(f);
 				ObjectInputStream ois = new ObjectInputStream(fis);
@@ -115,7 +119,6 @@ public class DNSServer {
 				ois.close();
 				fis.close();
 			}
-			//otherwise initialize empty database TreeMap
 			else {
 				database = new TreeMap<String, TreeMap<String, String>>();
 			}
@@ -125,7 +128,7 @@ public class DNSServer {
 			System.out.println("Server has been started on " + 
 					InetAddress.getLocalHost().getHostName() + ":" + serverSocket.getLocalPort() + ".");
 
-			//save database TreeMap onto database file when server closes (ctrl-c on command line)
+			//run when program ends
 			Runtime.getRuntime().addShutdownHook(new Thread() {
 				public void run() {
 					try {
@@ -133,6 +136,7 @@ public class DNSServer {
 						System.out.println("Server has been stopped.");
 						FileOutputStream fos = new FileOutputStream("database");
 						ObjectOutputStream oos = new ObjectOutputStream(fos);
+						//serializes database to file
 						oos.writeObject(database);
 						oos.close();
 						fos.close();
@@ -142,7 +146,7 @@ public class DNSServer {
 				}
 			});
 
-			//while server is running, create a new thread for each client, requests processed in helper class
+			//creates a new socket and thread for each client
 			while(true) {
 				try {
 					Socket connectionSocket = serverSocket.accept();
@@ -158,9 +162,9 @@ public class DNSServer {
 		}
 	}
 
-	//synchronized(database) in all following command methods to prevent concurrent access conflicts
-	
+	//creates or updates record of specified name, value, and type
 	public static String put(String name, String value, String type) {
+		//locks database for duration of operation for concurrency
 		synchronized(database) {
 			if (!database.containsKey(type)) {
 				database.put(type, new TreeMap<String, String>());
@@ -176,7 +180,10 @@ public class DNSServer {
 		}
 	}
 
+	
+	//get record of the specified name and type
 	public static String get(String name, String type) {
+		//locks database for duration of operation for concurrency
 		synchronized(database) {
 			if (!database.containsKey(type) || !database.get(type).containsKey(name)) {
 				return "404 Not Found\n"
@@ -189,7 +196,9 @@ public class DNSServer {
 		}
 	}
 
+	//delete record of the specified name and type
 	public static String del(String name, String type) {
+		//locks database for duration of operation for concurrency
 		synchronized(database) {
 			if (!database.containsKey(type) || !database.get(type).containsKey(name)) {
 				return "404 Not Found\n"
@@ -203,7 +212,9 @@ public class DNSServer {
 		}
 	}
 
+	//gets name and type of all records
 	public static String browse() {
+		//locks database for duration of operation for concurrency
 		synchronized(database) {
 			String records = "";
 			for (String type : database.keySet()) {
