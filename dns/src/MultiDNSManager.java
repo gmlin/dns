@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,11 +25,17 @@ public class MultiDNSManager {
 			BufferedReader br = new BufferedReader(fr);
 
 			String line;
+			Process process;
+			BufferedReader reader;
 			
 			while ((line = br.readLine().trim()) != null) {
 				if (!line.equals("")) {
-					processes.add(Runtime.getRuntime().exec("java MultiDNSServer " + line));
-					System.out.println("Server for record type " + line + " has been started.");
+					process = Runtime.getRuntime().exec("java MultiDNSServer " + line);
+					processes.add(process);
+					reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+					System.out.println(reader.readLine());
+					System.out.println(reader.readLine());
+					reader.close();
 				}
 			}
 			br.close();
