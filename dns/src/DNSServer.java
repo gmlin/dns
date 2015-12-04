@@ -50,15 +50,17 @@ public class DNSServer {
 							serverResponse = browse();
 							break;
 						case "exit":
+							outToClient.close();
+							inFromClient.close();
 							connectionSocket.close();
 							break;
 						default:
-							serverResponse = "Incorrect command.";
+							serverResponse = "400 Bad Request\nIncorrect command.";
 							break;
 						}
 					}
 					catch (ArrayIndexOutOfBoundsException e) {
-						serverResponse = "Missing arguments.";
+						serverResponse = "400 Bad Request\nMissing arguments.";
 					}
 					if (!clientCommand.equals("exit")) {
 						outToClient.writeInt(serverResponse.length());
