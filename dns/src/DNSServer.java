@@ -33,6 +33,7 @@ public class DNSServer {
 			try {
 				BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
 				DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
+				//loop until user client enters exit command
 				while (!connectionSocket.isClosed()) {
 					clientCommand = inFromClient.readLine();
 					//split user client commands into an array
@@ -57,6 +58,7 @@ public class DNSServer {
 							inFromClient.close();
 							connectionSocket.close();
 							break;
+						//if first argument from user isn't recognized
 						default:
 							serverResponse = "400 Bad Request\nIncorrect command.";
 							break;
@@ -80,7 +82,9 @@ public class DNSServer {
 		}
 
 	}
+	//end of helper class code
 
+	//database using a TreeMap within a TreeMap in the form of (type, (name, value)), all string values
 	private static TreeMap<String, TreeMap<String, String>> database;
 
 	@SuppressWarnings("unchecked")
@@ -104,7 +108,7 @@ public class DNSServer {
 
 			System.out.println("Server has been started on port " + serverSocket.getLocalPort() + ".");
 
-			//save database TreeMap onto database file when server closes
+			//save database TreeMap onto database file when server closes (ctrl-c on command line)
 			Runtime.getRuntime().addShutdownHook(new Thread() {
 				public void run() {
 					try {
