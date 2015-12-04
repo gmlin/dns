@@ -1,4 +1,3 @@
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -22,6 +21,8 @@ public class MultiDNSClient {
 			+ "in the database\n"
 			+ "\nexit: terminates connection with the manager and server and exits the program\n";
 
+	private static final int SO_TIMEOUT = 10000;
+	
 	public static void main(String[] args) throws IOException {
 
 		String type;
@@ -35,7 +36,7 @@ public class MultiDNSClient {
 		try {
 			BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
 			Socket managerSocket = new Socket(args[0], Integer.parseInt(args[1]));
-			managerSocket.setSoTimeout(10000);
+			managerSocket.setSoTimeout(SO_TIMEOUT);
 			DataOutputStream outToManager = new DataOutputStream(managerSocket.getOutputStream());
 			DataInputStream inFromManager = new DataInputStream(managerSocket.getInputStream());
 			DataOutputStream outToServer = null;
@@ -52,7 +53,7 @@ public class MultiDNSClient {
 					System.out.println(lines[0]);
 					address = lines[1].split(":");
 					serverSocket = new Socket(address[0], Integer.parseInt(address[1]));
-					serverSocket.setSoTimeout(10000);
+					serverSocket.setSoTimeout(SO_TIMEOUT);
 					outToServer = new DataOutputStream(serverSocket.getOutputStream());
 					inFromServer = new DataInputStream(serverSocket.getInputStream());
 					System.out.println("Connected to server for record type " + type + ".");

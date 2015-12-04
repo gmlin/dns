@@ -16,7 +16,9 @@ public class MultiDNSManager {
 	private static List<Process> processes = new ArrayList<Process>();
 	private static HashMap<String, String> map = new HashMap<String, String>();
 	
-	public static class ClientConnection implements Runnable {
+	private static final int MANAGER_PORT = 14260;
+	
+	private static class ClientConnection implements Runnable {
 
 		private Socket connectionSocket;
 
@@ -25,7 +27,6 @@ public class MultiDNSManager {
 		}
 
 		public void run() {
-			String type;
 			String clientCommand;
 			String[] commandArgs;
 			String serverResponse = "";
@@ -95,7 +96,7 @@ public class MultiDNSManager {
 		}
 		else {
 
-			final ServerSocket serverSocket = new ServerSocket(0);
+			final ServerSocket serverSocket = new ServerSocket(MANAGER_PORT);
 			System.out.println("Manager has been started on " + 
 					serverSocket.getInetAddress().getHostAddress() + ":" + serverSocket.getLocalPort() + ".");
 

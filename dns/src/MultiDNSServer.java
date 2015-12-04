@@ -17,7 +17,7 @@ public class MultiDNSServer {
 	
 	private static TreeMap<String, String> database;
 
-	public static class ClientConnection implements Runnable {
+	private static class ClientConnection implements Runnable {
 
 		private Socket connectionSocket;
 

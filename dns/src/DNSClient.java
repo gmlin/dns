@@ -21,6 +21,8 @@ public class DNSClient {
 			+ "in the database\n"
 			+ "\nexit: terminates connection with the server and exits the program\n";
 
+	private static final int SO_TIMEOUT = 10000;
+	
 	public static void main(String[] args) throws IOException {
 
 		String clientCommand;
@@ -29,7 +31,7 @@ public class DNSClient {
 		try {
 			BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
 			Socket clientSocket = new Socket(args[0], Integer.parseInt(args[1]));
-			clientSocket.setSoTimeout(10000);
+			clientSocket.setSoTimeout(SO_TIMEOUT);
 			DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
 			DataInputStream inFromServer = new DataInputStream(clientSocket.getInputStream());
 			System.out.println("Connected to server.");

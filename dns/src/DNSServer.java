@@ -20,7 +20,7 @@ public class DNSServer {
 
 	
 	//helper class ClientConnection
-	public static class ClientConnection implements Runnable {
+	private static class ClientConnection implements Runnable {
 
 		private Socket connectionSocket;
 
