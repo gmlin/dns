@@ -11,15 +11,15 @@ import java.net.UnknownHostException;
 public class MultiDNSClient {
 
 	private static final String helpMessage = "\nhelp: prints a list of supported commands\n"
-			+ "\nput [name] [value] [type]: adds name record to the database "
+			+ "\nput [name] [value]: adds name record to the database "
 			+ "or updates the record with the new value\n"
-			+ "\nget [name] [type]: returns the value of the record with the "
-			+ "provided name and type\n"
-			+ "\ndel [name] [type]: removes the record with the provided "
-			+ "name and type from the database\n"
-			+ "\nbrowse: displays the name and type of all current name records "
+			+ "\nget [name]: returns the value of the record with the "
+			+ "provided name\n"
+			+ "\ndel [name]: removes the record with the provided "
+			+ "name from the database\n"
+			+ "\nbrowse: displays the name of all current name records "
 			+ "in the database\n"
-			+ "\nexit: terminates connection with the server and exits the program\n";
+			+ "\nexit: terminates connection with the manager and server and exits the program\n";
 
 	public static void main(String[] args) throws IOException {
 
@@ -37,6 +37,7 @@ public class MultiDNSClient {
 				clientCommand = inFromUser.readLine();
 
 				if (clientCommand.equals("exit")) {
+					outToServer.writeBytes(clientCommand + "\n");
 					inFromServer.close();
 					outToServer.close();
 					inFromUser.close();

@@ -38,13 +38,13 @@ public class MultiDNSServer {
 					try {
 						switch (commandArgs[0]) {
 						case "put":
-							serverResponse = put(commandArgs[1], commandArgs[2], commandArgs[3]);
+							serverResponse = put(commandArgs[1], commandArgs[2]);
 							break;
 						case "get":
-							serverResponse = get(commandArgs[1], commandArgs[2]);
+							serverResponse = get(commandArgs[1]);
 							break;
 						case "del":
-							serverResponse = del(commandArgs[1], commandArgs[2]);
+							serverResponse = del(commandArgs[1]);
 							break;
 						case "browse":
 							serverResponse = browse();
@@ -76,7 +76,7 @@ public class MultiDNSServer {
 
 	}
 
-	private static TreeMap<String, TreeMap<String, String>> database;
+	private static TreeMap<String, String> database;
 
 	@SuppressWarnings("unchecked")
 	public static void main(final String[] args) throws IOException, ClassNotFoundException {
@@ -85,12 +85,12 @@ public class MultiDNSServer {
 		if (f.exists()) {
 			FileInputStream fis = new FileInputStream(f);
 			ObjectInputStream ois = new ObjectInputStream(fis);
-			database = (TreeMap<String, TreeMap<String, String>>) ois.readObject();
+			database = (TreeMap<String, String>) ois.readObject();
 			ois.close();
 			fis.close();
 		}
 		else {
-			database = new TreeMap<String, TreeMap<String, String>>();
+			database = new TreeMap<String, String>();
 		}
 		final ServerSocket serverSocket = new ServerSocket(0);
 		System.out.println(serverSocket.getInetAddress().getHostAddress() + ":" + serverSocket.getLocalPort());
@@ -121,44 +121,39 @@ public class MultiDNSServer {
 		}
 	}
 
-	public static String put(String name, String value, String type) {
+	public static String put(String name, String value) {
 		synchronized(database) {
-			if (!database.containsKey(type)) {
-				database.put(type, new TreeMap<String, String>());
-			}
-			if (database.get(type).containsKey(name)) {
-				database.get(type).put(name, value);
+			if (database.containsKey(name)) {
+				database.put(name, value);
 				return "The record has been updated.";
 			}
 			else {
-				database.get(type).put(name, value);
+				database.put(name, value);
 				return "The record has been added.";
 			}
 		}
 	}
 
-	public static String get(String name, String type) {
+	public static String get(String name) {
 		synchronized(database) {
-			if (!database.containsKey(type) || !database.get(type).containsKey(name)) {
+			if (!database.containsKey(name)) {
 				return "404 Not Found\n"
-						+ "The record of type " + type + 
-						" and name " + name + " cannot be found.";
+						+ "The record for " + name + " cannot be found.";
 			}
 			else {
-				return "200 OK\n" + database.get(type).get(name);
+				return "200 OK\n" + database.get(name);
 			}
 		}
 	}
 
-	public static String del(String name, String type) {
+	public static String del(String name) {
 		synchronized(database) {
-			if (!database.containsKey(type) || !database.get(type).containsKey(name)) {
+			if (!database.containsKey(name)) {
 				return "404 Not Found\n"
-						+ "The record of type " + type + 
-						" and name " + name + " cannot be found.";
+						+ "The record for " + name + " cannot be found.";
 			}
 			else {
-				database.get(type).remove(name);
+				database.remove(name);
 				return "200 OK\nThe record has been removed.";
 			}
 		}
@@ -167,11 +162,8 @@ public class MultiDNSServer {
 	public static String browse() {
 		synchronized(database) {
 			String records = "";
-			for (String type : database.keySet()) {
-				for (String name : database.get(type).keySet()) {
-					records += "\nName: " + name + "\n"
-							+ "Type: " + type + "\n";
-				}
+			for (String name : database.keySet()) {
+				records += "\nName: " + name + "\n";
 			}
 			if (records.equals("")) {
 				return "200 OK\nThe database is empty.";

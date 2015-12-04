@@ -106,7 +106,8 @@ public class DNSServer {
 			}
 			final ServerSocket serverSocket = new ServerSocket(0);
 
-			System.out.println("Server has been started on port " + serverSocket.getLocalPort() + ".");
+			System.out.println("Server has been started on " + 
+					serverSocket.getInetAddress().getHostAddress() + ":" + serverSocket.getLocalPort() + ".");
 
 			//save database TreeMap onto database file when server closes (ctrl-c on command line)
 			Runtime.getRuntime().addShutdownHook(new Thread() {

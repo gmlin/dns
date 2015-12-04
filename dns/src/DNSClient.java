@@ -11,8 +11,8 @@ import java.net.UnknownHostException;
 public class DNSClient {
 
 	private static final String helpMessage = "\nhelp: prints a list of supported commands\n"
-			+ "\nput [name] [value] [type]: adds name record to the database "
-			+ "or updates the record with the new value\n"
+			+ "\nput [name] [value] [type]: adds name record of the specified type "
+			+ "to the database or updates the record with the new value\n"
 			+ "\nget [name] [type]: returns the value of the record with the "
 			+ "provided name and type\n"
 			+ "\ndel [name] [type]: removes the record with the provided "
@@ -37,6 +37,7 @@ public class DNSClient {
 				clientCommand = inFromUser.readLine();
 
 				if (clientCommand.equals("exit")) {
+					outToServer.writeBytes(clientCommand + "\n");
 					inFromServer.close();
 					outToServer.close();
 					inFromUser.close();
