@@ -19,19 +19,19 @@ import java.util.List;
 
 public class MultiDNSManager {
 
-	//list of the server processes started by the manager
+	// list of the server processes started by the manager
 	private static List<Process> processes = new ArrayList<Process>();
-	
-	//maps record type to server address information
+
+	// maps record type to server address information
 	private static HashMap<String, String> map = new HashMap<String, String>();
 
-	//well-defined TCP port this program runs on
+	// well-defined TCP port this program runs on
 	private static final int MANAGER_PORT = 14260;
 
-	//helper class that handles a single client's requests
+	// helper class that handles a single client's requests
 	private static class ClientConnection implements Runnable {
 
-		//socket that connects client to the manager
+		// socket that connects client to the manager
 		private Socket connectionSocket;
 
 		public ClientConnection(Socket connectionSocket) {
@@ -45,56 +45,57 @@ public class MultiDNSManager {
 
 			System.out.println("A connection has been made.");
 			try {
-				final BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
-				final DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
+				final BufferedReader inFromClient = new BufferedReader(
+						new InputStreamReader(connectionSocket.getInputStream()));
+				final DataOutputStream outToClient = new DataOutputStream(
+						connectionSocket.getOutputStream());
 
-				//run when thread ends
+				// run when thread ends
 				Runtime.getRuntime().addShutdownHook(new Thread() {
 					public void run() {
 						try {
 							outToClient.close();
 							inFromClient.close();
 							connectionSocket.close();
-						}
-						catch (IOException e) {
+						} catch (IOException e) {
 						}
 					}
 				});
 
 				while (!connectionSocket.isClosed()) {
 					clientCommand = inFromClient.readLine();
-					//separates arguments by whitespace
-					commandArgs = clientCommand.split(" ");
-					try {
-						//performs actions based on client's first argument
-						switch (commandArgs[0]) {
-						case "connect":
-							serverResponse = server(commandArgs[1]);
-							break;
-						case "type":
-							serverResponse = server(commandArgs[1]);
-							break;
-						case "exit":
-							outToClient.close();
-							inFromClient.close();
-							connectionSocket.close();
-							break;
-						//if first argument isn't recognized
-						default:
-							serverResponse = "400 Bad Request\nIncorrect command.";
-							break;
+					// separates arguments by whitespace
+					if (clientCommand != null) {
+						commandArgs = clientCommand.split(" ");
+						try {
+							// performs actions based on client's first argument
+							switch (commandArgs[0]) {
+							case "connect":
+								serverResponse = server(commandArgs[1]);
+								break;
+							case "type":
+								serverResponse = server(commandArgs[1]);
+								break;
+							case "exit":
+								outToClient.close();
+								inFromClient.close();
+								connectionSocket.close();
+								break;
+							// if first argument isn't recognized
+							default:
+								serverResponse = "400 Bad Request\nIncorrect command.";
+								break;
+							}
+						} catch (ArrayIndexOutOfBoundsException e) {
+							serverResponse = "400 Bad Request\nMissing arguments.";
+						}
+						if (!clientCommand.equals("exit")) {
+							// send length of response
+							outToClient.writeInt(serverResponse.length());
+							// send response
+							outToClient.writeBytes(serverResponse);
 						}
 					}
-					catch (ArrayIndexOutOfBoundsException e) {
-						serverResponse = "400 Bad Request\nMissing arguments.";
-					}
-					if (!clientCommand.equals("exit")) {
-						//send length of response
-						outToClient.writeInt(serverResponse.length());
-						//send response
-						outToClient.writeBytes(serverResponse);
-					}
-
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -104,18 +105,17 @@ public class MultiDNSManager {
 
 	}
 
-
 	public static void main(String[] args) throws IOException {
 
 		File f = new File("manager.in");
 		if (!f.exists()) {
 			System.out.println("manager.in does not exist in this directory.");
-		}
-		else {
+		} else {
 
 			final ServerSocket serverSocket = new ServerSocket(MANAGER_PORT);
-			System.out.println("Manager has been started on " + 
-					InetAddress.getLocalHost().getHostName() + ":" + serverSocket.getLocalPort() + ".");
+			System.out.println("Manager has been started on "
+					+ InetAddress.getLocalHost().getHostName() + ":"
+					+ serverSocket.getLocalPort() + ".");
 
 			FileReader fr = new FileReader(f);
 			BufferedReader br = new BufferedReader(fr);
@@ -125,29 +125,31 @@ public class MultiDNSManager {
 			BufferedReader reader;
 			String address;
 
-			//starts new server process for each line in manager.in
+			// starts new server process for each line in manager.in
 			while ((type = br.readLine()) != null) {
 				type = type.trim();
 				if (!type.equals("")) {
-					process = Runtime.getRuntime().exec("java MultiDNSServer " + type);
+					process = Runtime.getRuntime().exec(
+							"java MultiDNSServer " + type);
 					processes.add(process);
-					reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+					reader = new BufferedReader(new InputStreamReader(
+							process.getInputStream()));
 					address = reader.readLine();
 					map.put(type, address);
-					System.out.println("Server for record type " + type + " has been started on " 
-							+ address + ".");
+					System.out.println("Server for record type " + type
+							+ " has been started on " + address + ".");
 					reader.close();
 				}
 			}
 			br.close();
 			fr.close();
 
-			//run when program ends
+			// run when program ends
 			Runtime.getRuntime().addShutdownHook(new Thread() {
 				public void run() {
 
 					try {
-						//end each server process
+						// end each server process
 						for (Process process : processes) {
 							process.destroy();
 							System.out.println("Server has been stopped.");
@@ -159,28 +161,25 @@ public class MultiDNSManager {
 					System.out.println("Manager has been stopped.");
 				}
 			});
-			
-			//creates a new socket and thread for each client
+
+			// creates a new socket and thread for each client
 			while (true) {
 				try {
 					Socket connectionSocket = serverSocket.accept();
 					new Thread(new ClientConnection(connectionSocket)).start();
-				}
-				catch (SocketException e) {
+				} catch (SocketException e) {
 				}
 			}
 		}
 	}
 
-	//get the server address information for the specified type
+	// get the server address information for the specified type
 	public static String server(String type) {
 		if (map.containsKey(type)) {
 			return "200 OK\n" + map.get(type);
-		}
-		else {
+		} else {
 			return "404 Not Found\nType not found.";
 		}
 	}
-
 
 }

@@ -23,7 +23,7 @@ public class DNSClient {
 			+ "in the database\n"
 			+ "\nexit: terminates connection with the server and exits the program\n";
 
-	//socket timeout in ms
+	// socket timeout in ms
 	private static final int SO_TIMEOUT = 10000;
 
 	public static void main(String[] args) throws IOException {
@@ -32,43 +32,44 @@ public class DNSClient {
 		byte[] serverResponse;
 		int responseLength;
 		try {
-			BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
+			BufferedReader inFromUser = new BufferedReader(
+					new InputStreamReader(System.in));
 			Socket clientSocket = new Socket(args[0], Integer.parseInt(args[1]));
 			clientSocket.setSoTimeout(SO_TIMEOUT);
-			DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
-			DataInputStream inFromServer = new DataInputStream(clientSocket.getInputStream());
+			DataOutputStream outToServer = new DataOutputStream(
+					clientSocket.getOutputStream());
+			DataInputStream inFromServer = new DataInputStream(
+					clientSocket.getInputStream());
 			System.out.println("Connected to server.");
 
 			while (!clientSocket.isClosed()) {
 				System.out.println("Enter a command:");
 				clientCommand = inFromUser.readLine();
-
-				if (clientCommand.equals("exit")) {
-					outToServer.writeBytes(clientCommand + "\n");
-					inFromServer.close();
-					outToServer.close();
-					inFromUser.close();
-					clientSocket.close();
+				if (clientCommand != null) {
+					if (clientCommand.equals("exit")) {
+						outToServer.writeBytes(clientCommand + "\n");
+						inFromServer.close();
+						outToServer.close();
+						inFromUser.close();
+						clientSocket.close();
+					} else if (clientCommand.equals("help")) {
+						System.out.println(helpMessage);
+					} else {
+						// send request
+						outToServer.writeBytes(clientCommand + "\n");
+						// get length of response
+						responseLength = inFromServer.readInt();
+						serverResponse = new byte[responseLength];
+						// receive response
+						inFromServer.readFully(serverResponse);
+						System.out.println(new String(serverResponse));
+					}
 				}
-				else if (clientCommand.equals("help")) {
-					System.out.println(helpMessage);
-				}
-				else {
-					//send request
-					outToServer.writeBytes(clientCommand + "\n");
-					//get length of response
-					responseLength = inFromServer.readInt();
-					serverResponse = new byte[responseLength];
-					//receive response
-					inFromServer.readFully(serverResponse);
-					System.out.println(new String(serverResponse));
-				}
-			}	
-		}
-		catch (UnknownHostException e) {
-			System.out.println("Cannot connect to server with the provided hostname and port.");
-		}
-		catch (ArrayIndexOutOfBoundsException e) {
+			}
+		} catch (UnknownHostException e) {
+			System.out
+					.println("Cannot connect to server with the provided hostname and port.");
+		} catch (ArrayIndexOutOfBoundsException e) {
 			System.out.println("Missing hostname or port.");
 		}
 	}
