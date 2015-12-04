@@ -15,6 +15,10 @@ import java.util.TreeMap;
 
 public class DNSServer {
 
+	//database using a TreeMap within a TreeMap in the form of (type, (name, value)), all string values
+		private static TreeMap<String, TreeMap<String, String>> database;
+
+	
 	//helper class ClientConnection
 	public static class ClientConnection implements Runnable {
 
@@ -25,14 +29,28 @@ public class DNSServer {
 		}
 
 		public void run() {
+			
 			String clientCommand;
 			String[] commandArgs;
 			String serverResponse = "";
 
 			System.out.println("A connection has been made.");
 			try {
-				BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
-				DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
+				final BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
+				final DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
+				
+				Runtime.getRuntime().addShutdownHook(new Thread() {
+					public void run() {
+						try {
+							outToClient.close();
+							inFromClient.close();
+							connectionSocket.close();
+						}
+						catch (IOException e) {
+						}
+					}
+				});
+				
 				//loop until user client enters exit command
 				while (!connectionSocket.isClosed()) {
 					clientCommand = inFromClient.readLine();
@@ -76,16 +94,12 @@ public class DNSServer {
 
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
 			}
-			System.out.println("Connection has been closed.");
+			System.out.println("A connection has been closed.");
 		}
 
 	}
 	//end of ClientRequest code
-
-	//database using a TreeMap within a TreeMap in the form of (type, (name, value)), all string values
-	private static TreeMap<String, TreeMap<String, String>> database;
 
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) throws IOException {

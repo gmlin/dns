@@ -1,18 +1,91 @@
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
 
 public class MultiDNSManager {
 
 	private static List<Process> processes = new ArrayList<Process>();
 	private static HashMap<String, String> map = new HashMap<String, String>();
+	
+	public static class ClientConnection implements Runnable {
+
+		private Socket connectionSocket;
+
+		public ClientConnection(Socket connectionSocket) {
+			this.connectionSocket = connectionSocket;
+		}
+
+		public void run() {
+			String type;
+			String clientCommand;
+			String[] commandArgs;
+			String serverResponse = "";
+
+			System.out.println("A connection has been made.");
+			try {
+				final BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
+				final DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
+				
+				Runtime.getRuntime().addShutdownHook(new Thread() {
+					public void run() {
+						try {
+							outToClient.close();
+							inFromClient.close();
+							connectionSocket.close();
+						}
+						catch (IOException e) {
+						}
+					}
+				});
+				
+				while (!connectionSocket.isClosed()) {
+					clientCommand = inFromClient.readLine();
+					//split user client commands into an array
+					commandArgs = clientCommand.split(" ");
+					try {
+						switch (commandArgs[0]) {
+						case "server":
+							serverResponse = "200 OK\n" + map.get(commandArgs[1]);
+							break;
+						case "exit":
+							outToClient.close();
+							inFromClient.close();
+							connectionSocket.close();
+							break;
+						//if first argument from user isn't recognized
+						default:
+							serverResponse = "400 Bad Request\nIncorrect command.";
+							break;
+						}
+					}
+					//error if user enters wrong parameters
+					catch (ArrayIndexOutOfBoundsException e) {
+						serverResponse = "400 Bad Request\nMissing arguments.";
+					}
+					//write response to client, if they didn't choose exit command
+					if (!clientCommand.equals("exit")) {
+						outToClient.writeInt(serverResponse.length());
+						outToClient.writeBytes(serverResponse);
+					}
+
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			System.out.println("A connection has been closed.");
+		}
+
+	}
+	
 
 	public static void main(String[] args) throws IOException {
 
@@ -65,7 +138,14 @@ public class MultiDNSManager {
 					System.out.println("Manager has been stopped.");
 				}
 			});
-			while (true);
+			while (true) {
+				try {
+					Socket connectionSocket = serverSocket.accept();
+					new Thread(new ClientConnection(connectionSocket)).start();
+				}
+				catch (SocketException e) {
+				}
+			}
 		}
 	}
 }

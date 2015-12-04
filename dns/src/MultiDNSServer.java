@@ -14,6 +14,8 @@ import java.net.SocketException;
 import java.util.TreeMap;
 
 public class MultiDNSServer {
+	
+	private static TreeMap<String, String> database;
 
 	public static class ClientConnection implements Runnable {
 
@@ -30,8 +32,21 @@ public class MultiDNSServer {
 
 			System.out.println("A connection has been made.");
 			try {
-				BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
-				DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
+				final BufferedReader inFromClient = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
+				final DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
+				
+				Runtime.getRuntime().addShutdownHook(new Thread() {
+					public void run() {
+						try {
+							outToClient.close();
+							inFromClient.close();
+							connectionSocket.close();
+						}
+						catch (IOException e) {
+						}
+					}
+				});
+				
 				while (!connectionSocket.isClosed()) {
 					clientCommand = inFromClient.readLine();
 					commandArgs = clientCommand.split(" ");
@@ -69,14 +84,11 @@ public class MultiDNSServer {
 
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
 			}
-			System.out.println("Connection has been closed.");
+			System.out.println("A connection has been closed.");
 		}
 
 	}
-
-	private static TreeMap<String, String> database;
 
 	@SuppressWarnings("unchecked")
 	public static void main(final String[] args) throws IOException, ClassNotFoundException {

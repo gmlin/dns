@@ -32,8 +32,9 @@ public class DNSClient {
 			clientSocket.setSoTimeout(10000);
 			DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
 			DataInputStream inFromServer = new DataInputStream(clientSocket.getInputStream());
+			System.out.println("Connected to server.");
 			while (!clientSocket.isClosed()) {
-
+				System.out.println("Enter a command:");
 				clientCommand = inFromUser.readLine();
 
 				if (clientCommand.equals("exit")) {
