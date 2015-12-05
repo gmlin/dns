@@ -1,5 +1,5 @@
-Extract all java files from archive.
-Run both server and client on separate command line windows.
+Extract the source files by running "unzip src.zip" on the command line.
+The source files will then be located in the current directory.
 
 DNSServer and DNSClient are the server and client programs for Stage 1 of the project.
 MultiDNSManager, MultiDNSServer, and MultiDNSClient are programs for Stage 2 of the project.
