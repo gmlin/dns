@@ -112,6 +112,7 @@ public class MultiDNSClient {
 							inFromServer.close();
 							outToServer.close();
 							serverSocket.close();
+							//makes user select a new type server
 							serverSocket = null;
 						}
 
