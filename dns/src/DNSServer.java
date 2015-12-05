@@ -178,10 +178,10 @@ public class DNSServer {
 			}
 			if (database.get(type).containsKey(name)) {
 				database.get(type).put(name, value);
-				return "The record has been updated.";
+				return "200 OK\nThe record has been updated.";
 			} else {
 				database.get(type).put(name, value);
-				return "The record has been added.";
+				return "200 OK\nThe record has been added.";
 			}
 		}
 	}
